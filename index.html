@@ -97,12 +97,21 @@
       }
     }
 
+    #fish-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
     .profile-card {
       position: relative;
-      z-index: 1;
+      z-index: 2;
       width: 100%;
       max-width: 780px;
-      background: rgba(30, 31, 36, 0.92);
+      background: rgba(30, 31, 36, 0.88);
       backdrop-filter: blur(12px);
       border: 1px solid var(--border-subtle);
       border-radius: 20px;
@@ -270,7 +279,6 @@
     .stagger-1 { animation: slideUp 0.5s ease-out 0.08s both; }
     .stagger-2 { animation: slideUp 0.5s ease-out 0.16s both; }
     .stagger-3 { animation: slideUp 0.5s ease-out 0.24s both; }
-    .stagger-4 { animation: slideUp 0.5s ease-out 0.32s both; }
 
     @keyframes slideUp {
       from {
@@ -752,6 +760,8 @@
     <div class="orb orb-3"></div>
   </div>
 
+  <canvas id="fish-canvas" aria-hidden="true"></canvas>
+
   <main class="profile-card">
     <div class="banner"></div>
 
@@ -1017,6 +1027,347 @@
         ).onfinish = () => spark.remove();
       }
     });
+
+    const canvas = document.getElementById("fish-canvas");
+    const ctx = canvas.getContext("2d");
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener("resize", () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const pointer = {
+      x: width / 2,
+      y: height / 2,
+      prevX: width / 2,
+      prevY: height / 2,
+      speed: 0,
+      active: false,
+      lastMove: 0
+    };
+
+    const ripples = [];
+    const foods = [];
+    const bubbles = [];
+
+    window.addEventListener("mousemove", (e) => {
+      const dx = e.clientX - pointer.x;
+      const dy = e.clientY - pointer.y;
+      pointer.speed = Math.hypot(dx, dy);
+      pointer.prevX = pointer.x;
+      pointer.prevY = pointer.y;
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      pointer.active = true;
+      pointer.lastMove = performance.now();
+
+      if (pointer.speed > 6 && Math.random() < 0.25) {
+        ripples.push({
+          x: e.clientX,
+          y: e.clientY,
+          radius: 4,
+          maxRadius: 42,
+          alpha: 0.22
+        });
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (e.target.closest(".modal-box")) return;
+
+      ripples.push({
+        x: e.clientX,
+        y: e.clientY,
+        radius: 6,
+        maxRadius: 110,
+        alpha: 0.45
+      });
+
+      foods.push({
+        x: e.clientX,
+        y: e.clientY,
+        radius: 4.5,
+        pulse: 0
+      });
+
+      if (foods.length > 8) {
+        foods.shift();
+      }
+    });
+
+    const fishPalettes = [
+      { head: "#c084fc", tail: "#6366f1", glow: "rgba(192, 132, 252, 0.22)" },
+      { head: "#60a5fa", tail: "#3b82f6", glow: "rgba(96, 165, 250, 0.22)" },
+      { head: "#f472b6", tail: "#8b5cf6", glow: "rgba(244, 114, 182, 0.22)" },
+      { head: "#38bdf8", tail: "#818cf8", glow: "rgba(56, 189, 248, 0.22)" },
+      { head: "#a78bfa", tail: "#ec4899", glow: "rgba(167, 139, 250, 0.22)" },
+      { head: "#818cf8", tail: "#2dd4bf", glow: "rgba(129, 140, 248, 0.22)" }
+    ];
+
+    class Fish {
+      constructor(index) {
+        this.palette = fishPalettes[index % fishPalettes.length];
+        this.size = 7.5 + Math.random() * 4.5;
+        this.segmentCount = 9;
+        this.segmentSpacing = this.size * 0.72;
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        const startAngle = Math.random() * Math.PI * 2;
+        this.baseSpeed = 1.25 + Math.random() * 0.65;
+        this.vx = Math.cos(startAngle) * this.baseSpeed;
+        this.vy = Math.sin(startAngle) * this.baseSpeed;
+        this.wavePhase = Math.random() * Math.PI * 2;
+        this.wanderAngle = startAngle;
+        this.segments = [];
+        for (let i = 0; i < this.segmentCount; i++) {
+          this.segments.push({
+            x: this.x - Math.cos(startAngle) * i * this.segmentSpacing,
+            y: this.y - Math.sin(startAngle) * i * this.segmentSpacing
+          });
+        }
+      }
+
+      update(now) {
+        let targetSpeed = this.baseSpeed;
+        let steerX = 0;
+        let steerY = 0;
+
+        let nearestFood = null;
+        let nearestFoodDist = Infinity;
+
+        for (let i = 0; i < foods.length; i++) {
+          const d = Math.hypot(foods[i].x - this.x, foods[i].y - this.y);
+          if (d < nearestFoodDist) {
+            nearestFoodDist = d;
+            nearestFood = foods[i];
+          }
+        }
+
+        if (nearestFood && nearestFoodDist < 420) {
+          const angleToFood = Math.atan2(nearestFood.y - this.y, nearestFood.x - this.x);
+          steerX += Math.cos(angleToFood) * 0.14;
+          steerY += Math.sin(angleToFood) * 0.14;
+          targetSpeed = this.baseSpeed * 2.1;
+
+          if (nearestFoodDist < this.size + 8) {
+            const eatenIndex = foods.indexOf(nearestFood);
+            if (eatenIndex !== -1) {
+              for (let b = 0; b < 5; b++) {
+                bubbles.push({
+                  x: nearestFood.x + (Math.random() - 0.5) * 10,
+                  y: nearestFood.y + (Math.random() - 0.5) * 10,
+                  vy: -0.7 - Math.random() * 1.1,
+                  vx: (Math.random() - 0.5) * 0.6,
+                  radius: 1.5 + Math.random() * 2,
+                  alpha: 0.75
+                });
+              }
+              foods.splice(eatenIndex, 1);
+            }
+          }
+        } else if (pointer.active && now - pointer.lastMove < 3500) {
+          const dx = pointer.x - this.x;
+          const dy = pointer.y - this.y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < 65 && pointer.speed > 14) {
+            const fleeAngle = Math.atan2(-dy, -dx);
+            steerX += Math.cos(fleeAngle) * 0.22;
+            steerY += Math.sin(fleeAngle) * 0.22;
+            targetSpeed = this.baseSpeed * 2.4;
+          } else if (dist > 45 && dist < 260) {
+            const orbitAngle = Math.atan2(dy, dx) + 0.45;
+            steerX += Math.cos(orbitAngle) * 0.065;
+            steerY += Math.sin(orbitAngle) * 0.065;
+            targetSpeed = this.baseSpeed * 1.35;
+          }
+        }
+
+        this.wanderAngle += (Math.random() - 0.5) * 0.14;
+        steerX += Math.cos(this.wanderAngle) * 0.035;
+        steerY += Math.sin(this.wanderAngle) * 0.035;
+
+        const margin = 70;
+        if (this.x < margin) steerX += 0.08;
+        if (this.x > width - margin) steerX -= 0.08;
+        if (this.y < margin) steerY += 0.08;
+        if (this.y > height - margin) steerY -= 0.08;
+
+        this.vx += steerX;
+        this.vy += steerY;
+
+        const currentSpeed = Math.hypot(this.vx, this.vy) || 1;
+        const smoothedSpeed = currentSpeed + (targetSpeed - currentSpeed) * 0.08;
+        this.vx = (this.vx / currentSpeed) * smoothedSpeed;
+        this.vy = (this.vy / currentSpeed) * smoothedSpeed;
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+        this.wavePhase += 0.14 + smoothedSpeed * 0.06;
+
+        this.segments[0].x = this.x;
+        this.segments[0].y = this.y;
+
+        for (let i = 1; i < this.segmentCount; i++) {
+          const prev = this.segments[i - 1];
+          const curr = this.segments[i];
+          const dx = curr.x - prev.x;
+          const dy = curr.y - prev.y;
+          const segAngle = Math.atan2(dy, dx);
+          const waveOffset = Math.sin(this.wavePhase - i * 0.65) * (i * 0.32);
+          const perpAngle = segAngle + Math.PI / 2;
+
+          curr.x = prev.x + Math.cos(segAngle) * this.segmentSpacing + Math.cos(perpAngle) * waveOffset * 0.18;
+          curr.y = prev.y + Math.sin(segAngle) * this.segmentSpacing + Math.sin(perpAngle) * waveOffset * 0.18;
+        }
+      }
+
+      draw() {
+        const headAngle = Math.atan2(this.vy, this.vx);
+
+        const glowGrad = ctx.createRadialGradient(this.x, this.y, 1, this.x, this.y, this.size * 3.2);
+        glowGrad.addColorStop(0, this.palette.glow);
+        glowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        const finSeg = this.segments[2];
+        const finAngle = Math.atan2(this.segments[1].y - finSeg.y, this.segments[1].x - finSeg.x);
+        const finFlutter = Math.sin(this.wavePhase) * 0.25;
+
+        ctx.save();
+        ctx.translate(finSeg.x, finSeg.y);
+        ctx.rotate(finAngle);
+        ctx.fillStyle = this.palette.head;
+        ctx.globalAlpha = 0.38;
+
+        ctx.beginPath();
+        ctx.ellipse(-2, -this.size * 0.95, this.size * 0.75, this.size * 0.32, -0.55 + finFlutter, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(-2, this.size * 0.95, this.size * 0.75, this.size * 0.32, 0.55 - finFlutter, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        const tailEnd = this.segments[this.segmentCount - 1];
+        const tailPrev = this.segments[this.segmentCount - 2];
+        const tailAngle = Math.atan2(tailEnd.y - tailPrev.y, tailEnd.x - tailPrev.x);
+        const tailSwing = Math.sin(this.wavePhase - 2.4) * 0.35;
+
+        ctx.save();
+        ctx.translate(tailEnd.x, tailEnd.y);
+        ctx.rotate(tailAngle + tailSwing);
+        ctx.fillStyle = this.palette.tail;
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(this.size * 0.9, -this.size * 0.95, this.size * 1.65, -this.size * 0.55);
+        ctx.quadraticCurveTo(this.size * 1.1, 0, this.size * 1.65, this.size * 0.55);
+        ctx.quadraticCurveTo(this.size * 0.9, this.size * 0.95, 0, 0);
+        ctx.fill();
+        ctx.restore();
+
+        for (let i = this.segmentCount - 1; i >= 0; i--) {
+          const seg = this.segments[i];
+          const t = i / (this.segmentCount - 1);
+          const radius = this.size * (1 - t * 0.78) * (i === 0 ? 0.88 : 1);
+
+          ctx.beginPath();
+          ctx.arc(seg.x, seg.y, Math.max(radius, 1.5), 0, Math.PI * 2);
+          ctx.fillStyle = i < 4 ? this.palette.head : this.palette.tail;
+          ctx.globalAlpha = 0.85 - t * 0.25;
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = "#ffffff";
+        const eyeOffset = this.size * 0.45;
+        const eyeForward = this.size * 0.35;
+        const leftEyeX = this.x + Math.cos(headAngle) * eyeForward - Math.sin(headAngle) * eyeOffset;
+        const leftEyeY = this.y + Math.sin(headAngle) * eyeForward + Math.cos(headAngle) * eyeOffset;
+        const rightEyeX = this.x + Math.cos(headAngle) * eyeForward + Math.sin(headAngle) * eyeOffset;
+        const rightEyeY = this.y + Math.sin(headAngle) * eyeForward - Math.cos(headAngle) * eyeOffset;
+
+        ctx.beginPath();
+        ctx.arc(leftEyeX, leftEyeY, 1.4, 0, Math.PI * 2);
+        ctx.arc(rightEyeX, rightEyeY, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    const school = Array.from({ length: 6 }, (_, i) => new Fish(i));
+
+    function animate(now) {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.radius += 1.6;
+        r.alpha *= 0.955;
+
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(167, 139, 250, ${r.alpha})`;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        if (r.alpha < 0.015 || r.radius >= r.maxRadius) {
+          ripples.splice(i, 1);
+        }
+      }
+
+      for (let i = 0; i < foods.length; i++) {
+        const f = foods[i];
+        f.pulse += 0.1;
+        const glowR = f.radius + Math.sin(f.pulse) * 1.5;
+
+        const foodGlow = ctx.createRadialGradient(f.x, f.y, 0.5, f.x, f.y, glowR * 3);
+        foodGlow.addColorStop(0, "rgba(244, 114, 182, 0.85)");
+        foodGlow.addColorStop(1, "rgba(244, 114, 182, 0)");
+        ctx.fillStyle = foodGlow;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, glowR * 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#fdf2f8";
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.radius * 0.65, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        b.alpha -= 0.015;
+
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(196, 181, 253, ${Math.max(b.alpha, 0)})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        if (b.alpha <= 0) {
+          bubbles.splice(i, 1);
+        }
+      }
+
+      for (let i = 0; i < school.length; i++) {
+        school[i].update(now);
+        school[i].draw();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
   </script>
 </body>
 </html>
