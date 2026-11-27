@@ -9,9 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-outer: #141417;
+      --bg-outer: #111115;
       --bg-card: #1e1f24;
-      --bg-panel: #191a1f;
+      --bg-panel: #18191e;
       --border-subtle: rgba(255, 255, 255, 0.08);
       --border-hover: rgba(139, 92, 246, 0.55);
       --text-primary: #f4f4f6;
@@ -30,48 +30,130 @@
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: var(--bg-outer);
-      background-image: radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.12), transparent 60%);
       color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px 16px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.35;
+      animation: floatOrb 16s ease-in-out infinite alternate;
+    }
+
+    .orb-1 {
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, #8b5cf6, transparent 70%);
+      top: -80px;
+      left: 12%;
+    }
+
+    .orb-2 {
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, #3b82f6, transparent 70%);
+      bottom: -100px;
+      right: 10%;
+      animation-delay: -6s;
+      animation-duration: 20s;
+    }
+
+    .orb-3 {
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, #e879f9, transparent 70%);
+      top: 45%;
+      left: 55%;
+      opacity: 0.2;
+      animation-delay: -3s;
+      animation-duration: 14s;
+    }
+
+    @keyframes floatOrb {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      50% {
+        transform: translate(40px, -30px) scale(1.08);
+      }
+      100% {
+        transform: translate(-30px, 35px) scale(0.95);
+      }
     }
 
     .profile-card {
+      position: relative;
+      z-index: 1;
       width: 100%;
       max-width: 780px;
-      background: var(--bg-card);
+      background: rgba(30, 31, 36, 0.92);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--border-subtle);
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-      animation: cardFadeIn 0.6s ease-out;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      animation: cardFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     @keyframes cardFadeIn {
       from {
         opacity: 0;
-        transform: translateY(14px);
+        transform: translateY(22px) scale(0.98);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
       }
     }
 
     .banner {
+      position: relative;
       height: 165px;
       background: linear-gradient(120deg, #e879f9, #8b5cf6, #3b82f6, #6366f1);
       background-size: 250% 250%;
-      animation: gradientShift 10s ease infinite;
+      animation: gradientShift 9s ease infinite;
+      overflow: hidden;
+    }
+
+    .banner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        110deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.22) 50%,
+        transparent 70%
+      );
+      transform: translateX(-100%);
+      animation: bannerSheen 6s ease-in-out infinite;
     }
 
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
+    }
+
+    @keyframes bannerSheen {
+      0%, 65% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
 
     .card-body {
@@ -84,6 +166,8 @@
       gap: 18px;
       margin-top: -54px;
       margin-bottom: 24px;
+      position: relative;
+      z-index: 2;
     }
 
     .avatar-wrapper {
@@ -94,7 +178,12 @@
       padding: 4px;
       background: var(--bg-card);
       flex-shrink: 0;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .avatar-wrapper:hover {
+      transform: scale(1.06) rotate(-2deg);
     }
 
     .avatar-wrapper img {
@@ -115,6 +204,26 @@
       background: #22c55e;
       border: 3px solid var(--bg-card);
       border-radius: 50%;
+    }
+
+    .status-dot::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid #22c55e;
+      animation: pulseRing 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
+
+    @keyframes pulseRing {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(1.9);
+        opacity: 0;
+      }
     }
 
     .header-info {
@@ -140,8 +249,9 @@
 
     #dynamic-role {
       color: #c4b5fd;
-      font-weight: 500;
-      transition: opacity 0.25s ease;
+      font-weight: 600;
+      display: inline-block;
+      transition: opacity 0.25s ease, transform 0.25s ease;
     }
 
     .bento-grid {
@@ -157,7 +267,25 @@
       gap: 14px;
     }
 
+    .stagger-1 { animation: slideUp 0.5s ease-out 0.08s both; }
+    .stagger-2 { animation: slideUp 0.5s ease-out 0.16s both; }
+    .stagger-3 { animation: slideUp 0.5s ease-out 0.24s both; }
+    .stagger-4 { animation: slideUp 0.5s ease-out 0.32s both; }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .btn {
+      position: relative;
+      overflow: hidden;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -170,7 +298,10 @@
       text-decoration: none;
       cursor: pointer;
       border: 1px solid transparent;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.25s ease,
+                  background 0.2s ease,
+                  border-color 0.2s ease;
     }
 
     .btn:hover {
@@ -178,7 +309,7 @@
     }
 
     .btn:active {
-      transform: translateY(0);
+      transform: scale(0.97);
     }
 
     .btn-primary {
@@ -187,9 +318,26 @@
       box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
     }
 
+    .btn-primary::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+      transform: skewX(-20deg);
+      animation: btnShine 4.5s infinite;
+    }
+
+    @keyframes btnShine {
+      0%, 70% { left: -100%; }
+      100% { left: 160%; }
+    }
+
     .btn-primary:hover {
       background: var(--accent-purple-hover);
-      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
+      box-shadow: 0 10px 28px rgba(139, 92, 246, 0.55);
     }
 
     .btn-secondary {
@@ -201,18 +349,50 @@
     .btn-secondary:hover {
       border-color: var(--border-hover);
       background: #22232a;
+      box-shadow: 0 6px 18px rgba(124, 58, 237, 0.18);
+    }
+
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      transform: scale(0);
+      animation: rippleAnim 0.55s linear;
+      pointer-events: none;
+    }
+
+    @keyframes rippleAnim {
+      to {
+        transform: scale(3.5);
+        opacity: 0;
+      }
     }
 
     .panel {
+      position: relative;
       background: var(--bg-panel);
       border: 1px solid var(--border-subtle);
       border-radius: 14px;
       padding: 18px;
+      overflow: hidden;
       transition: border-color 0.25s ease, transform 0.25s ease;
     }
 
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        260px circle at var(--mouse-x, -300px) var(--mouse-y, -300px),
+        rgba(139, 92, 246, 0.14),
+        transparent 70%
+      );
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
     .panel:hover {
-      border-color: rgba(255, 255, 255, 0.16);
+      border-color: rgba(139, 92, 246, 0.35);
     }
 
     .bio-panel {
@@ -245,6 +425,11 @@
 
     .stat-item {
       position: relative;
+      transition: transform 0.2s ease;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-2px);
     }
 
     .stat-item:not(:last-child)::after {
@@ -285,6 +470,16 @@
       gap: 8px;
     }
 
+    .floating-icon {
+      display: inline-block;
+      animation: bobIcon 2.6s ease-in-out infinite;
+    }
+
+    @keyframes bobIcon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
     .coursework-desc {
       font-size: 0.82rem;
       color: var(--text-secondary);
@@ -318,24 +513,31 @@
     }
 
     .social-link {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: #d1d5db;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid transparent;
-      transition: all 0.2s ease;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
     }
 
     .social-link:hover {
       color: #ffffff;
-      background: rgba(139, 92, 246, 0.18);
+      background: rgba(139, 92, 246, 0.22);
       border-color: var(--border-hover);
-      transform: translateY(-2px);
+      transform: translateY(-3px) scale(1.08);
+      box-shadow: 0 6px 16px rgba(139, 92, 246, 0.28);
+    }
+
+    .social-link:active {
+      transform: scale(0.94);
     }
 
     .social-link svg {
@@ -347,7 +549,7 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.74);
       backdrop-filter: blur(6px);
       display: none;
       align-items: center;
@@ -377,6 +579,18 @@
       flex-direction: column;
       overflow: hidden;
       box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalPop {
+      from {
+        opacity: 0;
+        transform: scale(0.93) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
     }
 
     .modal-header {
@@ -399,10 +613,12 @@
       font-size: 1.4rem;
       cursor: pointer;
       line-height: 1;
+      transition: color 0.2s ease, transform 0.2s ease;
     }
 
     .modal-close:hover {
       color: #fff;
+      transform: rotate(90deg);
     }
 
     .modal-body {
@@ -420,13 +636,14 @@
       padding: 14px 16px;
       text-decoration: none;
       color: inherit;
-      transition: border-color 0.2s ease, transform 0.2s ease;
+      transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
       display: block;
     }
 
     .repo-card:hover {
       border-color: var(--border-hover);
-      transform: translateY(-2px);
+      background: #20222a;
+      transform: translateX(4px);
     }
 
     .repo-top {
@@ -469,15 +686,26 @@
       border-radius: 999px;
       font-size: 0.84rem;
       font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
       opacity: 0;
       pointer-events: none;
-      transition: all 0.25s ease;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 200;
     }
 
     .toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
+    }
+
+    .click-spark {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
     }
 
     @media (max-width: 680px) {
@@ -518,6 +746,12 @@
 </head>
 <body>
 
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
   <main class="profile-card">
     <div class="banner"></div>
 
@@ -525,7 +759,7 @@
       <div class="profile-header">
         <div class="avatar-wrapper">
           <img src="https://avatars.githubusercontent.com/jomcalvindimla" alt="Jom Calvin Dimla" />
-          <span class="status-dot" title="Open to collaborations"></span>
+          <span class="status-dot" title="Online"></span>
         </div>
         <div class="header-info">
           <h1>Jom Calvin Dimla</h1>
@@ -539,11 +773,11 @@
 
       <div class="bento-grid">
         <div class="left-col">
-          <a href="https://github.com/jomcalvindimla" target="_blank" rel="noopener" class="btn btn-primary">
+          <a href="https://github.com/jomcalvindimla" target="_blank" rel="noopener" class="btn btn-primary ripple-target stagger-1">
             GitHub Profile
           </a>
 
-          <div class="panel bio-panel">
+          <div class="panel bio-panel stagger-2">
             <div class="panel-label">Bio</div>
             <p class="bio-text">
               Studying BSIT at National University Clark, building my skills one project at a time through Java, web development, and hands-on coding.
@@ -552,7 +786,7 @@
         </div>
 
         <div class="right-col">
-          <div class="panel stats-grid">
+          <div class="panel stats-grid stagger-1">
             <div class="stat-item">
               <div class="stat-value">BSIT</div>
               <div class="stat-label">NU Clark</div>
@@ -567,34 +801,34 @@
             </div>
           </div>
 
-          <div class="panel coursework-panel">
+          <div class="panel coursework-panel stagger-2">
             <div>
               <div class="coursework-title">
-                <span>📚</span>
+                <span class="floating-icon">📚</span>
                 <span>Coursework &amp; Assignments</span>
               </div>
               <p class="coursework-desc">
                 Explore my Java exercises, lab activities, and coding projects.
               </p>
             </div>
-            <button type="button" class="btn btn-secondary btn-view" id="view-coursework-btn">
+            <button type="button" class="btn btn-secondary btn-view ripple-target" id="view-coursework-btn">
               View
             </button>
           </div>
 
-          <div class="panel social-panel">
+          <div class="panel social-panel stagger-3">
             <span class="social-label">Find me on:</span>
             <div class="social-icons">
-              <a href="https://github.com/jomcalvindimla" target="_blank" rel="noopener" class="social-link" aria-label="GitHub">
+              <a href="https://github.com/jomcalvindimla" target="_blank" rel="noopener" class="social-link ripple-target" aria-label="GitHub">
                 <svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.02c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11.02 11.02 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.58.23 2.75.11 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
               </a>
-              <a href="https://www.facebook.com/share/1CJpGiZZMf/" target="_blank" rel="noopener" class="social-link" aria-label="Facebook">
+              <a href="https://www.facebook.com/share/1CJpGiZZMf/" target="_blank" rel="noopener" class="social-link ripple-target" aria-label="Facebook">
                 <svg viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54V9.85c0-2.51 1.49-3.89 3.78-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>
               </a>
-              <a href="https://www.instagram.com/jomcalvin?dmpr=MW5iMDJvaDVsOXl5dQ==" target="_blank" rel="noopener" class="social-link" aria-label="Instagram">
+              <a href="https://www.instagram.com/jomcalvin?dmpr=MW5iMDJvaDVsOXl5dQ==" target="_blank" rel="noopener" class="social-link ripple-target" aria-label="Instagram">
                 <svg viewBox="0 0 24 24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
               </a>
-              <button type="button" class="social-link" id="copy-email-btn" aria-label="Copy Email" title="Copy Email Address">
+              <button type="button" class="social-link ripple-target" id="copy-email-btn" aria-label="Copy Email" title="Copy Email Address">
                 <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
               </button>
             </div>
@@ -631,12 +865,14 @@
 
     setInterval(() => {
       roleEl.style.opacity = "0";
+      roleEl.style.transform = "translateY(-4px)";
       setTimeout(() => {
         roleIndex = (roleIndex + 1) % roles.length;
         roleEl.textContent = roles[roleIndex];
         roleEl.style.opacity = "1";
+        roleEl.style.transform = "translateY(0)";
       }, 250);
-    }, 3500);
+    }, 3200);
 
     const repoCountEl = document.getElementById("repo-count");
     const repoListEl = document.getElementById("repo-list");
@@ -723,6 +959,64 @@
         }
       });
     }
+
+    document.querySelectorAll(".panel").forEach(panel => {
+      panel.addEventListener("mousemove", (e) => {
+        const rect = panel.getBoundingClientRect();
+        panel.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+        panel.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+      });
+      panel.addEventListener("mouseleave", () => {
+        panel.style.setProperty("--mouse-x", `-300px`);
+        panel.style.setProperty("--mouse-y", `-300px`);
+      });
+    });
+
+    document.querySelectorAll(".ripple-target").forEach(el => {
+      el.addEventListener("click", function (e) {
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const ripple = document.createElement("span");
+        ripple.className = "ripple";
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+        ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+
+    const sparkColors = ["#e879f9", "#8b5cf6", "#60a5fa", "#a5b4fc", "#34d399"];
+
+    document.addEventListener("click", (e) => {
+      const particleCount = 10;
+      for (let i = 0; i < particleCount; i++) {
+        const spark = document.createElement("span");
+        spark.className = "click-spark";
+        const color = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+        spark.style.backgroundColor = color;
+        spark.style.boxShadow = `0 0 8px ${color}`;
+        spark.style.left = `${e.clientX}px`;
+        spark.style.top = `${e.clientY}px`;
+        document.body.appendChild(spark);
+
+        const angle = (Math.PI * 2 * i) / particleCount + (Math.random() * 0.4 - 0.2);
+        const distance = 28 + Math.random() * 32;
+        const destX = Math.cos(angle) * distance;
+        const destY = Math.sin(angle) * distance;
+
+        spark.animate(
+          [
+            { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+            { transform: `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) scale(0)`, opacity: 0 }
+          ],
+          {
+            duration: 480 + Math.random() * 180,
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)"
+          }
+        ).onfinish = () => spark.remove();
+      }
+    });
   </script>
 </body>
 </html>
